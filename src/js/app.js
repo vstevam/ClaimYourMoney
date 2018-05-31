@@ -20,10 +20,27 @@ var claimMyMoneyContract = web3.eth.contract([
 			{
 				"name": "_enMsg",
 				"type": "bytes32"
+			},
+			{
+				"name": "_r",
+				"type": "bytes32"
+			},
+			{
+				"name": "_s",
+				"type": "bytes32"
+			},
+			{
+				"name": "_v",
+				"type": "uint8"
 			}
 		],
-		"name": "sendMoney",
-		"outputs": [],
+		"name": "claimMyMoney",
+		"outputs": [
+			{
+				"name": "",
+				"type": "bool"
+			}
+		],
 		"payable": false,
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -60,42 +77,23 @@ var claimMyMoneyContract = web3.eth.contract([
 		"constant": true,
 		"inputs": [
 			{
-				"name": "sig",
+				"name": "r",
 				"type": "bytes32"
-			}
-		],
-		"name": "splitSignature",
-		"outputs": [
+			},
 			{
-				"name": "",
+				"name": "s",
+				"type": "bytes32"
+			},
+			{
+				"name": "v",
 				"type": "uint8"
 			},
 			{
-				"name": "",
-				"type": "bytes32"
-			},
-			{
-				"name": "",
+				"name": "hash",
 				"type": "bytes32"
 			}
 		],
-		"payable": false,
-		"stateMutability": "pure",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [
-			{
-				"name": "message",
-				"type": "bytes32"
-			},
-			{
-				"name": "sig",
-				"type": "bytes32"
-			}
-		],
-		"name": "recoverSigner",
+		"name": "constVerify",
 		"outputs": [
 			{
 				"name": "",
@@ -103,34 +101,7 @@ var claimMyMoneyContract = web3.eth.contract([
 			}
 		],
 		"payable": false,
-		"stateMutability": "pure",
-		"type": "function"
-	},
-	{
-		"constant": false,
-		"inputs": [
-			{
-				"name": "_receiver",
-				"type": "address"
-			},
-			{
-				"name": "_amount",
-				"type": "uint256"
-			},
-			{
-				"name": "_enMsg",
-				"type": "bytes32"
-			}
-		],
-		"name": "claimMyMoney",
-		"outputs": [
-			{
-				"name": "",
-				"type": "bool"
-			}
-		],
-		"payable": false,
-		"stateMutability": "nonpayable",
+		"stateMutability": "view",
 		"type": "function"
 	},
 	{
@@ -154,6 +125,71 @@ var claimMyMoneyContract = web3.eth.contract([
 		],
 		"payable": false,
 		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "r",
+				"type": "bytes32"
+			},
+			{
+				"name": "s",
+				"type": "bytes32"
+			},
+			{
+				"name": "v",
+				"type": "uint8"
+			},
+			{
+				"name": "hash",
+				"type": "bytes32"
+			}
+		],
+		"name": "verify",
+		"outputs": [
+			{
+				"name": "",
+				"type": "address"
+			}
+		],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "_receiver",
+				"type": "address"
+			},
+			{
+				"name": "_amount",
+				"type": "uint256"
+			},
+			{
+				"name": "_enMsg",
+				"type": "bytes32"
+			},
+			{
+				"name": "_r",
+				"type": "bytes32"
+			},
+			{
+				"name": "_s",
+				"type": "bytes32"
+			},
+			{
+				"name": "_v",
+				"type": "uint8"
+			}
+		],
+		"name": "sendMoney",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
@@ -209,37 +245,10 @@ var claimMyMoneyContract = web3.eth.contract([
 		],
 		"name": "Claim",
 		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"name": "_from",
-				"type": "address"
-			},
-			{
-				"indexed": true,
-				"name": "_to",
-				"type": "address"
-			},
-			{
-				"indexed": false,
-				"name": "_value",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"name": "_enMsg",
-				"type": "bytes32"
-			}
-		],
-		"name": "ReturnMoney",
-		"type": "event"
 	}
 ]);
 
-var claim = claimMyMoneyContract.at('0x37e92757410a1ab3599432dfa3559e216c902ebe');
+var claim = claimMyMoneyContract.at('0xdc4b11a41aaf223e871f9142cbd92510cd9efd21');
 
 console.log(claim);
 
@@ -249,7 +258,7 @@ eventTransfer.watch(function(error,result){
   if(!error){
     $('#loader').hide();
     $('#logT').append('<p> Bob is sending ' + result.args._value +
-      ' ether and an encrypted message: ' + web3.toAscii(result.args._enMsg) + ' to Alice.</p>');
+      ' ether and an encrypted message ' + '(' + web3.toAscii(result.args._enMsg) + ')' + ' to Alice.</p>');
   }else{
     console.log(error);
     $('#loader').hide();
@@ -261,8 +270,8 @@ var eventClaim = claim.Claim();
 eventClaim.watch(function(error,result){
   if(!error){
     $('#loader').hide();
-    $('#logT').append('<p> Alice read the encrypted message ' + web3.toAscii(result.args._enMsg) +
-      ' and claim ' +  result.args._value + ' ether.</p>');
+    $('#logT').append('<p> Alice read the encrypted message ' + '(' +  web3.eth.accounts[0] + ')' +
+      ' and claimed ' +  result.args._value + ' ether.</p>');
   }else{
     console.log(error);
     $('#loader').hide();
@@ -273,10 +282,18 @@ $('#button').click(function(){
   $('#loader').show();
 
   const message = web3.sha3($('#msg').val());
-  const signature = web3.eth.sign(web3.eth.defaultAccount, message);
-  console.log(signature);
+  const signature = web3.eth.sign(web3.eth.accounts[0], web3.sha3($('#msg').val()));
 
-  claim.sendMoney(web3.eth.defaultAccount, $('#money').val(), signature, (err, red) =>{
+  r = "0x" + signature.slice(2, 66);
+  s = "0x" + signature.slice(66, 130);
+  v = "0x" + signature.slice(130, 132);
+  var v_decimal = web3.toDecimal(v)
+  if(v_decimal != 27 || v_decimal != 28) {
+    v_decimal += 27
+  }
+  h = web3.sha3($('#msg').val());
+
+  claim.sendMoney(web3.eth.defaultAccount, $('#money').val(), h, r, s, v_decimal, (err, red) =>{
     if (err) {
       $('#loader').hide();
       console.log("Hash is different");
